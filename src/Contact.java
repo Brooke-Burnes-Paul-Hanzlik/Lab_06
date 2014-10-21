@@ -1,5 +1,6 @@
+import java.io.Serializable;
 
-public class Contact {
+public class Contact implements Serializable {
 
 	private String name = "";
 	private long phone = 0;

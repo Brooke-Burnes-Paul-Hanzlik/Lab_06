@@ -1,6 +1,11 @@
 import java.util.Scanner;
 import java.io.PrintWriter;
 import java.io.File;
+import java.io.ObjectOutputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.FileInputStream;
+import java.io.*;
 
 public class ContactList {
 
@@ -67,42 +72,96 @@ public class ContactList {
 	}
 	
 	public boolean write(String name) {
-		PrintWriter p = null;
+		ObjectOutputStream o;
+		
 		try {
-			p = new PrintWriter(new File(name));
+			o = new ObjectOutputStream(new FileOutputStream(name));
+			for(int i = 0; i < contacts; i++)
+			{
+				o.writeObject(get(i));
+			}
+			
+			o.close();
 		}
-		catch (Exception e) { return false;}
-		
-		for(int z = 0; z < contacts; z++){
-		
-	p.printf("%s%n%d%n%s%n%s%n", 
-					contactArray[z].getName(),
-					contactArray[z].getPhone(),
-					contactArray[z].getAddress(),
-					contactArray[z].getComments());
+		catch(IOException e) {
+			System.out.println("File write problem to fix");
+			return false;
 		}
 		
-		p.close();
 		return true;
-		
 	}
 	
-	public boolean read(String b) {
-		Scanner scan = null;
-		try {
-			scan = new Scanner(new File(b));
-		}
-		catch (Exception e) {return false;}
+	public boolean read(String name) {
+		ObjectInputStream i;
 		
-		while(scan.hasNext()) {
-			Contact newContact = new Contact("Name", 000, "Address", "Comments");
-			newContact.setName(scan.nextLine());
-			newContact.setPhone(Long.parseLong(scan.nextLine()));
-			newContact.setAddress(scan.nextLine());
-			newContact.setComments(scan.nextLine());
-			add(newContact);
+		boolean next = true;
+		
+		try {
+			i = new ObjectInputStream(new FileInputStream(name));
+			// keep reading files till EOFException
+			while(next)
+			{
+				add((Contact) i.readObject());
+			}
+			
+			i.close();
 		}
-		scan.close();
+		catch (EOFException e)
+		{
+			System.out.println("End of File read");
+			next = false;
+		}
+		catch (IOException e)
+		{
+			System.out.println("IO problem to fix");
+			return false;
+		}
+		catch (ClassNotFoundException e)
+		{
+			System.out.println("Class not found");
+			return false;
+		}
+		return true;
+	}
+	
+	public boolean addInOrder(Contact contact)
+	{
+		// If no room for another contact, return false
+		if(contacts >= 20)
+		{
+			return false;
+		}
+		
+		// Find index where it needs to be added
+		int i = 0;
+		while(contact.toString().compareTo(get(i).toString()) == 1
+			&& i < contacts)
+		{
+			i++;
+		}
+		
+		
+		//move contacts ahead of the new contact into an array
+		Contact tmp[] = new Contact[contacts - i];
+		
+		for(int x = i; x < contacts; x++)
+		{
+			tmp[x] = get(x + i);
+		}
+		
+		// remove contacts ahead of new contact
+		while(contacts >= i)
+		{
+			remove();
+		}
+		
+		// add new contact and stored contacts
+		add(contact);
+		
+		for(Contact con : tmp)
+		{
+			add(con);
+		}
 		return true;
 	}
 	
